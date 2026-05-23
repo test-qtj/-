@@ -34,8 +34,34 @@ const server = http.createServer((req, res) => {
     req.on('end', () => {
       try {
         const data = JSON.parse(body);
+
+        // 1. 写入 profile-data.json
         fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-        console.log('✅ 数据已保存 —', new Date().toLocaleTimeString());
+
+        // 2. 更新 index.html 中的 defaults 对象
+        let html = fs.readFileSync(HTML_FILE, 'utf8');
+        const defaultsStr = JSON.stringify(data, null, 2)
+          .replace(/\\n/g, '\\n')  // keep literal \n for template strings? No, it's a JS object
+          .replace(/"/g, '\'')     // single quotes for JS object keys
+          .replace(/'([^']+)':/g, '$1:');  // remove quotes from keys
+
+        // Better: just use JSON.stringify with proper formatting
+        const newDefaults = JSON.stringify(data, null, 4)
+          .replace(/"([^"]+)":/g, '$1:')          // unquote keys
+          .replace(/: "([^"]*)"/g, ': \'$1\'')     // single-quote string values
+          .replace(/\\n/g, '\\\\n');               // escape newlines
+
+        const defaultsRegex = /  const defaults = \{[\s\S]*?\n  \};/;
+        const replacement = '  const defaults = ' + newDefaults.replace(/\n/g, '\n  ') + ';';
+
+        if (defaultsRegex.test(html)) {
+          html = html.replace(defaultsRegex, replacement);
+          fs.writeFileSync(HTML_FILE, html);
+          console.log('✅ 数据已保存 + index.html 已更新 —', new Date().toLocaleTimeString());
+        } else {
+          console.log('⚠️  未找到 defaults 对象，仅更新 data.json');
+        }
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true }));
       } catch (e) {
