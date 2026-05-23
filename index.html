@@ -1272,7 +1272,7 @@
   // ── Triggers ──────────────────────
   document.getElementById('admin-trigger').addEventListener('click', showPasswordPrompt);
   document.addEventListener('keydown', e => {
-    if (e.ctrlKey && e.shiftKey && e.key === 'E') {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
       e.preventDefault();
       showPasswordPrompt();
     }
