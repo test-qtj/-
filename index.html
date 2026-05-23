@@ -1238,6 +1238,15 @@
     renderPage(d);
     closeAdmin();
 
+    // 同步到服务器 → 写入文件 → GitHub 自动推送
+    fetch('/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(d)
+    }).then(r => r.json()).then(r => {
+      if (r.ok) console.log('✅ 已同步到 GitHub');
+    }).catch(() => {});
+
     // Re-trigger counter animation
     const statsEl = document.querySelector('.quick-stats');
     statsEl.style.opacity = '0';
