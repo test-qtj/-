@@ -38,28 +38,25 @@ const server = http.createServer((req, res) => {
         // 1. 写入 profile-data.json
         fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 
-        // 2. 更新 index.html 中的 defaults 对象
+        // 2. 更新 index.html 中 BEGIN/END_DEFAULTS 之间的 defaults 对象
         let html = fs.readFileSync(HTML_FILE, 'utf8');
-        const defaultsStr = JSON.stringify(data, null, 2)
-          .replace(/\\n/g, '\\n')  // keep literal \n for template strings? No, it's a JS object
-          .replace(/"/g, '\'')     // single quotes for JS object keys
-          .replace(/'([^']+)':/g, '$1:');  // remove quotes from keys
 
-        // Better: just use JSON.stringify with proper formatting
-        const newDefaults = JSON.stringify(data, null, 4)
-          .replace(/"([^"]+)":/g, '$1:')          // unquote keys
-          .replace(/: "([^"]*)"/g, ': \'$1\'')     // single-quote string values
-          .replace(/\\n/g, '\\\\n');               // escape newlines
+        const startTag = '// BEGIN_DEFAULTS';
+        const endTag = '// END_DEFAULTS';
+        const startIdx = html.indexOf(startTag);
+        const endIdx = html.indexOf(endTag);
 
-        const defaultsRegex = /  const defaults = \{[\s\S]*?\n  \};/;
-        const replacement = '  const defaults = ' + newDefaults.replace(/\n/g, '\n  ') + ';';
+        if (startIdx !== -1 && endIdx !== -1) {
+          const before = html.substring(0, startIdx + startTag.length);
+          const after = html.substring(endIdx);
 
-        if (defaultsRegex.test(html)) {
-          html = html.replace(defaultsRegex, replacement);
+          // 将数据格式化为 JS 对象字面量
+          const jsObj = formatJSObject(data, 2);
+          html = before + '\n  const defaults = ' + jsObj + ';\n  ' + after;
           fs.writeFileSync(HTML_FILE, html);
           console.log('✅ 数据已保存 + index.html 已更新 —', new Date().toLocaleTimeString());
         } else {
-          console.log('⚠️  未找到 defaults 对象，仅更新 data.json');
+          console.log('⚠️  未找到标记，仅更新 data.json');
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
