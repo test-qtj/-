@@ -4,6 +4,7 @@ const path = require('path');
 
 const DIR = __dirname;
 const DATA_FILE = path.join(DIR, 'profile-data.json');
+const HTML_FILE = path.join(DIR, 'index.html');
 const PORT = 3456;
 
 const MIME = {
