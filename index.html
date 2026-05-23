@@ -1109,9 +1109,20 @@
     return d.innerHTML;
   }
 
-  // Init page from stored data
-  const profileData = loadData();
+  // Init page from stored data (localStorage → server file → defaults)
+  let profileData = loadData();
   renderPage(profileData);
+
+  // 尝试从服务器获取最新数据
+  fetch('profile-data.json')
+    .then(r => r.json())
+    .then(d => {
+      if (JSON.stringify(d) !== JSON.stringify(profileData)) {
+        saveData(d);
+        renderPage(d);
+      }
+    })
+    .catch(() => {});
 
   // ── Password gate ──────────────────
   const pwOverlay = document.getElementById('pw-overlay');
