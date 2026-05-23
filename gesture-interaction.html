@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手势交互 — Gesture Interaction</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'SF Pro Display', 'PingFang SC', sans-serif;
+      background: #0a0a0f;
+      overflow: hidden;
+      height: 100vh;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #video {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+    }
+
+    #ui {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 32px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    #gesture-label {
+      font-size: 72px;
+      font-weight: 700;
+      letter-spacing: -2px;
+      color: #fff;
+      text-shadow: 0 0 80px rgba(100, 140, 255, 0.6);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0.9;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      pointer-events: auto;
+    }
+
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 8px #4ade80;
+      transition: all 0.3s;
+    }
+    .dot.off { background: #f87171; box-shadow: 0 0 8px #f87171; }
+
+    .gesture-hint {
+      font-size: 14px;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 0.5px;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .gesture-hint span { white-space: nowrap; }
+
+    #loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0a0a0f;
+      z-index: 10;
+      transition: opacity 0.6s;
+      pointer-events: auto;
+    }
+    #loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #loading p {
+      font-size: 18px;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 1px;
+    }
+
+    #start-btn {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10,10,15,0.85);
+      z-index: 11;
+      pointer-events: auto;
+      cursor: pointer;
+      flex-direction: column;
+      gap: 16px;
+      transition: opacity 0.5s;
+    }
+    #start-btn.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #start-btn button {
+      padding: 16px 48px;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50px;
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      cursor: pointer;
+      backdrop-filter: blur(20px);
+      transition: all 0.3s;
+    }
+    #start-btn button:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.4);
+      box-shadow: 0 0 40px rgba(100,140,255,0.2);
+    }
+    #start-btn p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.3);
+    }
+  </style>
+</head>
+<body>
+
+<video id="video" playsinline></video>
+<canvas id="canvas"></canvas>
+
+<div id="loading"><p>初始化模型…</p></div>
+
+<div id="start-btn">
+  <button onclick="document.getElementById('start-btn').classList.add('hidden'); init()">开 始 体 验</button>
+  <p>打开摄像头进行手势交互</p>
+</div>
+
+<div id="ui">
+  <div class="top-bar">
+    <div id="gesture-label">✋</div>
+    <div class="status">
+      <div class="dot" id="dot"></div>
+      <span id="status-text">就绪</span>
+    </div>
+  </div>
+  <div class="gesture-hint">
+    <span>✊ 握拳 · 收缩粒子</span>
+    <span>✋ 张开 · 扩散粒子</span>
+    <span>👆 食指 · 粒子跟随</span>
+    <span>✌️ 双指 · 连线模式</span>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm"
+  }
+}
+</script>
+
+<script type="module">
+  import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
+
+  // ── Canvas & Particles ──────────────────────────────
+
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const W = () => canvas.width = window.innerWidth * devicePixelRatio;
+  const H = () => canvas.height = window.innerHeight * devicePixelRatio;
+  W(); H();
+  window.addEventListener('resize', () => { W(); H(); });
+
+  const particles = [];
+  const MAX = 400;
+
+  class Particle {
+    constructor(x, y) {
+      this.x = x ?? Math.random() * canvas.width;
+      this.y = y ?? Math.random() * canvas.height;
+      this.baseX = this.x;
+      this.baseY = this.y;
+      this.vx = (Math.random() - 0.5) * 1.2;
+      this.vy = (Math.random() - 0.5) * 1.2;
+      this.size = Math.random() * 3 + 1;
+      this.hue = Math.random() * 60 + 200; // blue-purple range
+      this.life = 0;
+    }
+
+    update(handX, handY, gesture, indexDist, indexTip) {
+      const dx = this.x - handX;
+      const dy = this.y - handY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const maxR = 400;
+
+      if (dist < maxR) {
+        const force = (maxR - dist) / maxR;
+
+        if (gesture === 'fist') {
+          // fist: particles sucked inward
+          const pull = force * 8;
+          this.x -= (dx / dist) * pull;
+          this.y -= (dy / dist) * pull;
+          this.life = Math.max(0, this.life - 0.02);
+        } else if (gesture === 'open') {
+          // open palm: particles pushed outward
+          const push = force * 6;
+          this.x += (dx / dist) * push;
+          this.y += (dy / dist) * push;
+          this.life = Math.min(1, this.life + 0.015);
+        } else if (gesture === 'point' && dist < 200) {
+          // point: particles orbit finger
+          const angle = Math.atan2(dy, dx) + 0.08;
+          const targetX = handX + Math.cos(angle) * dist * 0.96;
+          const targetY = handY + Math.sin(angle) * dist * 0.96;
+          this.x += (targetX - this.x) * 0.15;
+          this.y += (targetY - this.y) * 0.15;
+          this.life = Math.min(1, this.life + 0.01);
+        } else {
+          // idle: gentle return to base position
+          this.x += (this.baseX - this.x) * 0.02 + this.vx * 0.3;
+          this.y += (this.baseY - this.y) * 0.02 + this.vy * 0.3;
+          this.life = Math.max(0, this.life - 0.005);
+        }
+      } else {
+        this.x += (this.baseX - this.x) * 0.02 + this.vx * 0.3;
+        this.y += (this.baseY - this.y) * 0.02 + this.vy * 0.3;
+        this.life = Math.max(0, this.life - 0.005);
+      }
+
+      // clamp to screen
+      this.x = Math.max(0, Math.min(canvas.width, this.x));
+      this.y = Math.max(0, Math.min(canvas.height, this.y));
+    }
+
+    draw() {
+      const alpha = 0.2 + this.life * 0.8;
+      const l = 60 + this.life * 20;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size * (0.6 + this.life * 0.4), 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${this.hue}, 70%, ${l}%, ${alpha})`;
+      ctx.fill();
+
+      if (this.life > 0.5) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * 1.8, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${this.hue}, 80%, ${l + 10}%, ${(this.life - 0.5) * 0.25})`;
+        ctx.fill();
+      }
+    }
+  }
+
+  for (let i = 0; i < MAX; i++) particles.push(new Particle());
+
+  // ── Hand Landmarker ─────────────────────────────────
+
+  const video = document.getElementById('video');
+  let handLandmarker;
+  let lastVideoTime = -1;
+  let gesture = 'idle';
+  let handPos = { x: canvas.width / 2, y: canvas.height / 2 };
+  let indexDist = 0;
+  let indexTip = { x: 0, y: 0 };
+  let smoothGesture = 'idle';
+  let gestureFrames = {};
+
+  async function init() {
+    document.getElementById('loading').style.display = 'flex';
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 640, height: 480, facingMode: 'user' }
+    });
+    video.srcObject = stream;
+    await video.play();
+
+    const vision = await FilesetResolver.forVisionTasks(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/wasm'
+    );
+    handLandmarker = await HandLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+        delegate: 'GPU',
+      },
+      runningMode: 'VIDEO',
+      numHands: 2,
+    });
+
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('dot').classList.remove('off');
+    document.getElementById('status-text').textContent = '运行中';
+    requestAnimationFrame(tick);
+  }
+
+  function smoothStep(edge0, edge1, x) {
+    const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+    return t * t * (3 - 2 * t);
+  }
+
+  function detectGesture(landmarks) {
+    const wrist = landmarks[0];
+    const thumbTip = landmarks[4];
+    const indexTip = landmarks[8];
+    const indexPip = landmarks[6];
+    const middleTip = landmarks[12];
+    const middlePip = landmarks[10];
+    const ringTip = landmarks[16];
+    const ringPip = landmarks[14];
+    const pinkyTip = landmarks[20];
+    const pinkyPip = landmarks[18];
+
+    const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+    const indexExtended = indexTip.y < indexPip.y - 0.03;
+    const middleExtended = middleTip.y < middlePip.y - 0.03;
+    const ringExtended = ringTip.y < ringPip.y - 0.03;
+    const pinkyExtended = pinkyTip.y < pinkyPip.y - 0.03;
+    const thumbExtended = dist(thumbTip, wrist) > dist(landmarks[3], wrist) * 1.1;
+
+    const fingerCount = [thumbExtended, indexExtended, middleExtended, ringExtended, pinkyExtended].filter(Boolean).length;
+
+    if (fingerCount <= 1) return 'fist';
+    if (fingerCount >= 4) return 'open';
+    if (indexExtended && !middleExtended && !ringExtended && !pinkyExtended) return 'point';
+    if (indexExtended && middleExtended && !ringExtended && !pinkyExtended) return 'peace';
+    return 'idle';
+  }
+
+  function tick() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // draw subtle grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.018)';
+    ctx.lineWidth = 0.5;
+    const gs = 60 * devicePixelRatio;
+    for (let x = gs; x < canvas.width; x += gs) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    }
+    for (let y = gs; y < canvas.height; y += gs) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+    }
+
+    // detect
+    if (handLandmarker && video.currentTime !== lastVideoTime) {
+      lastVideoTime = video.currentTime;
+      const results = handLandmarker.detectForVideo(video, performance.now());
+      if (results.landmarks && results.landmarks.length > 0) {
+        const lm = results.landmarks[0];
+
+        const raw = detectGesture(lm);
+        gestureFrames[raw] = (gestureFrames[raw] || 0) + 1;
+        for (const k of Object.keys(gestureFrames)) {
+          if (k !== raw) gestureFrames[k] = Math.max(0, (gestureFrames[k] || 0) - 1);
+        }
+        if (gestureFrames[raw] >= 4) smoothGesture = raw;
+
+        const ix = lm[8].x * canvas.width;
+        const iy = lm[8].y * canvas.height;
+        const mx = lm[12].x * canvas.width;
+        const my = lm[12].y * canvas.height;
+
+        handPos.x = ix;
+        handPos.y = iy;
+        indexTip = { x: ix, y: iy };
+        indexDist = Math.hypot(ix - mx, iy - my);
+
+        gesture = smoothGesture;
+      } else {
+        gesture = 'idle';
+        gestureFrames = {};
+        handPos.x += (canvas.width / 2 - handPos.x) * 0.03;
+        handPos.y += (canvas.height / 2 - handPos.y) * 0.03;
+      }
+    }
+
+    // update & draw particles
+    for (const p of particles) {
+      p.update(handPos.x, handPos.y, gesture, indexDist, indexTip);
+      p.draw();
+    }
+
+    // draw hand cursor glow
+    const glowGrad = ctx.createRadialGradient(handPos.x, handPos.y, 0, handPos.x, handPos.y, 150 * devicePixelRatio);
+    const glowColors = {
+      fist: 'rgba(200, 100, 255,',
+      open: 'rgba(100, 200, 255,',
+      point: 'rgba(255, 200, 100,',
+      peace: 'rgba(100, 255, 180,',
+      idle: 'rgba(100, 140, 255,',
+    };
+    const c = glowColors[gesture] || glowColors.idle;
+    glowGrad.addColorStop(0, c + '0.3)');
+    glowGrad.addColorStop(1, c + '0)');
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.arc(handPos.x, handPos.y, 150 * devicePixelRatio, 0, Math.PI * 2);
+    ctx.fill();
+
+    // cursor dot
+    ctx.beginPath();
+    ctx.arc(handPos.x, handPos.y, 6 * devicePixelRatio, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(handPos.x, handPos.y, 12 * devicePixelRatio, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // if peace mode, draw connection line
+    if (gesture === 'peace' && indexDist > 0) {
+      ctx.beginPath();
+      ctx.moveTo(indexTip.x, indexTip.y);
+      const lx = handPos.x + (indexTip.x - handPos.x) * 0.8;
+      const ly = handPos.y + (indexTip.y - handPos.y) * 0.8;
+      ctx.lineTo(lx, ly);
+      ctx.strokeStyle = 'rgba(100,255,180,0.4)';
+      ctx.lineWidth = 2 * devicePixelRatio;
+      ctx.stroke();
+    }
+
+    // label
+    const labels = { fist: '✊', open: '✋', point: '👆', peace: '✌️', idle: '🖐️' };
+    document.getElementById('gesture-label').textContent = labels[gesture] || labels.idle;
+
+    requestAnimationFrame(tick);
+  }
+
+  // expose init to the start button
+  window.init = init;
+</script>
+</body>
+</html>

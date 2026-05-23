@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>谭金强 — 个人简介</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #050510;
+      --surface: #0c0c1d;
+      --text: #e4e4ec;
+      --muted: #8888a8;
+      --accent: #6c7cff;
+      --accent2: #a78bfa;
+      --border: rgba(255,255,255,0.06);
+      --nav-bg: rgba(12,12,29,0.75);
+      --card-shadow: rgba(0,0,0,0.4);
+      --star-color: 200,200,255;
+      --tag-bg: rgba(108,124,255,0.1);
+      --tag-border: rgba(108,124,255,0.15);
+      --input-bg: rgba(255,255,255,0.04);
+      --btn-ghost-bg: rgba(255,255,255,0.06);
+    }
+    [data-theme="light"] {
+      --bg: #f5f5f8;
+      --surface: #ffffff;
+      --text: #1a1a2e;
+      --muted: #6b6b80;
+      --accent: #5b6af0;
+      --accent2: #7c3aed;
+      --border: rgba(0,0,0,0.08);
+      --nav-bg: rgba(255,255,255,0.75);
+      --card-shadow: rgba(0,0,0,0.08);
+      --star-color: 100,100,140;
+      --tag-bg: rgba(91,106,240,0.08);
+      --tag-border: rgba(91,106,240,0.15);
+      --input-bg: rgba(0,0,0,0.03);
+      --btn-ghost-bg: rgba(0,0,0,0.04);
+    }
+
+    body {
+      font-family: 'SF Pro Display', 'PingFang SC', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      cursor: default;
+    }
+
+    /* ── Animated background ────── */
+    #bg-canvas {
+      position: fixed; inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Custom cursor ──────────── */
+    .cursor {
+      position: fixed;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      pointer-events: none;
+      z-index: 9999;
+      mix-blend-mode: difference;
+      transition: transform 0.15s ease-out;
+      transform: translate(-50%, -50%);
+    }
+    [data-theme="light"] .cursor { display: none; }
+    .cursor-ring {
+      position: fixed;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.25);
+      pointer-events: none;
+      z-index: 9998;
+      mix-blend-mode: difference;
+      transition: width 0.3s, height 0.3s, border-color 0.3s;
+      transform: translate(-50%, -50%);
+    }
+    [data-theme="light"] .cursor-ring { display: none; }
+    .cursor-ring.hover {
+      width: 60px; height: 60px;
+      border-color: var(--accent2);
+    }
+
+    /* ── Nav ────────────────────── */
+    nav {
+      position: fixed; top: 20px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--nav-bg);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      z-index: 100;
+      border-radius: 50px;
+      border: 1px solid var(--border);
+      padding: 6px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    nav a {
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 13px; font-weight: 500;
+      letter-spacing: 0.5px;
+      padding: 8px 18px;
+      border-radius: 50px;
+      transition: all 0.3s;
+    }
+    nav a:hover, nav a.active {
+      color: var(--text);
+      background: rgba(128,128,160,0.12);
+    }
+
+    #theme-toggle {
+      margin-left: 8px;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center; justify-content: center;
+      transition: all 0.3s;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    #theme-toggle:hover { color: var(--text); border-color: var(--accent); }
+
+    /* ── Layout ─────────────────── */
+    .container {
+      max-width: 780px; margin: 0 auto;
+      padding: 0 32px 120px;
+      position: relative; z-index: 1;
+    }
+
+    section { padding-top: 140px; }
+
+    /* ── Section headers ────────── */
+    .section-label {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 32px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1; height: 1px;
+      background: var(--border);
+      max-width: 60px;
+    }
+
+    /* ── Hero ───────────────────── */
+    .hero {
+      padding-top: 200px;
+      position: relative;
+    }
+    .hero .greeting {
+      font-size: 14px; color: var(--accent);
+      letter-spacing: 1px; margin-bottom: 16px;
+      opacity: 0; animation: fadeUp 0.6s ease forwards;
+    }
+    .hero h1 {
+      font-size: clamp(42px, 8vw, 64px);
+      font-weight: 700;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 16px;
+      opacity: 0; animation: fadeUp 0.6s 0.1s ease forwards;
+      background: linear-gradient(135deg, #1a1a2e 0%, #5b5b80 50%, #5b6af0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    [data-theme="light"] .hero h1 {
+      background: linear-gradient(135deg, #1a1a2e 0%, #4b4b70 50%, #4b50d0 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    .hero .role {
+      font-size: 18px; color: var(--muted);
+      font-weight: 400;
+      opacity: 0; animation: fadeUp 0.6s 0.2s ease forwards;
+    }
+    .hero .bio {
+      margin-top: 28px; color: var(--muted);
+      max-width: 520px;
+      font-size: 15px;
+      line-height: 1.9;
+      opacity: 0; animation: fadeUp 0.6s 0.3s ease forwards;
+    }
+    .hero .quick-stats {
+      display: flex; gap: 40px;
+      margin-top: 32px;
+      opacity: 0; animation: fadeUp 0.6s 0.4s ease forwards;
+    }
+    .quick-stats .stat { text-align: center; }
+    .quick-stats .stat .num {
+      font-size: 28px; font-weight: 700;
+      color: var(--text);
+      letter-spacing: -1px;
+    }
+    .quick-stats .stat .label {
+      font-size: 12px; color: var(--muted);
+      letter-spacing: 1px; text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Timeline ───────────────── */
+    .timeline { position: relative; }
+
+    .timeline::before {
+      content: '';
+      position: absolute; left: 0; top: 4px;
+      width: 1px; height: calc(100% - 8px);
+      background: linear-gradient(180deg, var(--accent), var(--accent2), transparent);
+    }
+
+    .item {
+      position: relative;
+      padding-left: 32px;
+      margin-bottom: 56px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .item.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .item:last-child { margin-bottom: 0; }
+
+    .item::before {
+      content: '';
+      position: absolute; left: -5px; top: 6px;
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .item:hover::before {
+      transform: scale(1.5);
+      box-shadow: 0 0 24px var(--accent2);
+    }
+
+    .item .meta {
+      font-size: 12px; color: var(--accent);
+      letter-spacing: 1.5px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .item h3 {
+      font-size: 22px; font-weight: 600;
+      margin-bottom: 2px;
+      letter-spacing: -0.3px;
+    }
+    .item .org {
+      font-size: 14px; color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .item .desc {
+      font-size: 14px; color: var(--muted);
+      line-height: 1.8;
+    }
+
+    /* ── Tags ───────────────────── */
+    .tags {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 14px;
+    }
+    .tag {
+      font-size: 11px; font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: var(--tag-bg);
+      color: var(--accent2);
+      border: 1px solid var(--tag-border);
+      letter-spacing: 0.3px;
+      transition: all 0.3s;
+    }
+    .tag:hover {
+      background: rgba(108,124,255,0.18);
+      border-color: var(--accent);
+    }
+
+    /* ── Project cards ──────────── */
+    .project-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .project-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    .project-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .project-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(400px circle at var(--mx, 50%) var(--my, 50%), rgba(108,124,255,0.06), transparent);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .project-card:hover::before { opacity: 1; }
+    .project-card:hover {
+      border-color: rgba(108,124,255,0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px var(--card-shadow), 0 0 60px rgba(108,124,255,0.06);
+    }
+    .project-card .project-icon {
+      font-size: 28px; margin-bottom: 16px;
+    }
+    .project-card h3 {
+      font-size: 17px; font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+    }
+    .project-card .desc {
+      font-size: 13px; color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 600px) {
+      .project-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Contact ────────────────── */
+    .contact-links {
+      display: flex; gap: 24px; flex-wrap: wrap;
+    }
+    .contact-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 22px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    .contact-link:hover {
+      border-color: rgba(108,124,255,0.4);
+      background: rgba(108,124,255,0.06);
+    }
+    .contact-link .icon { font-size: 20px; }
+
+    /* ── Footer ─────────────────── */
+    footer {
+      text-align: center; padding: 60px 0 40px;
+      font-size: 12px; color: var(--muted);
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Scroll indicator ───────── */
+    .scroll-indicator {
+      position: absolute; bottom: -80px; left: 50%;
+      transform: translateX(-50%);
+      width: 1px; height: 40px;
+      background: linear-gradient(transparent, var(--muted));
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    /* ── Admin Panel ─────────────── */
+    #admin-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      z-index: 10000;
+      display: flex;
+      align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    #admin-overlay.open {
+      opacity: 1; pointer-events: auto;
+    }
+
+    #admin-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 640px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 36px 32px;
+      position: relative;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    }
+    #admin-panel h2 {
+      font-size: 20px; font-weight: 600;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+    #admin-panel .field {
+      margin-bottom: 18px;
+    }
+    #admin-panel label {
+      display: block;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    #admin-panel input,
+    #admin-panel textarea {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    #admin-panel input:focus,
+    #admin-panel textarea:focus {
+      border-color: var(--accent);
+    }
+    #admin-panel textarea { min-height: 80px; }
+    #admin-panel .field-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    #admin-panel .btn-row {
+      display: flex; gap: 12px; margin-top: 28px;
+      justify-content: flex-end;
+    }
+    #admin-panel button {
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s;
+    }
+    .btn-save {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-save:hover { background: #5a6ae8; }
+    .btn-cancel {
+      background: var(--btn-ghost-bg);
+      color: var(--muted);
+      border: 1px solid var(--border) !important;
+    }
+    .btn-cancel:hover { background: var(--border); }
+    .btn-logout {
+      position: absolute; top: 20px; right: 20px;
+      font-size: 12px;
+      background: none;
+      color: #f87171;
+      cursor: pointer;
+      border: none;
+    }
+
+    /* Password modal */
+    #pw-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(12px);
+      z-index: 10001;
+      display: flex;
+      align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    #pw-overlay.open {
+      opacity: 1; pointer-events: auto;
+    }
+    #pw-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      text-align: center;
+      width: 340px;
+    }
+    #pw-box h3 { font-size: 18px; margin-bottom: 8px; }
+    #pw-box p { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+    #pw-box input {
+      width: 100%; padding: 10px 14px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text); font-size: 16px;
+      text-align: center; letter-spacing: 4px;
+      outline: none;
+      margin-bottom: 16px;
+    }
+    #pw-box input:focus { border-color: var(--accent); }
+    #pw-box .pw-error {
+      font-size: 12px; color: #f87171;
+      margin-bottom: 8px;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    #pw-box .pw-error.show { opacity: 1; }
+    #pw-box button {
+      padding: 10px 32px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* Edit trigger */
+    #admin-trigger {
+      position: fixed; bottom: 24px; right: 24px;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 99;
+      display: flex;
+      align-items: center; justify-content: center;
+      transition: all 0.3s;
+    }
+    #admin-trigger:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .editable-highlight {
+      outline: 2px dashed rgba(108,124,255,0.3);
+      outline-offset: 4px;
+      border-radius: 4px;
+    }
+
+    /* Section add/delete buttons */
+    .admin-actions {
+      display: none; gap: 8px; margin-top: 12px;
+    }
+    .admin-mode .admin-actions { display: flex; }
+    .admin-actions button {
+      font-size: 11px; padding: 4px 12px;
+      border-radius: 6px;
+      background: var(--input-bg);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .admin-actions button:hover { border-color: var(--accent); color: var(--text); }
+    .admin-actions button.danger { color: #f87171; border-color: rgba(248,113,113,0.2); }
+    .admin-actions button.danger:hover { border-color: #f87171; }
+  </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<div class="cursor" id="cursor-dot"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<nav>
+  <a href="#about" class="active">关于</a>
+  <a href="#education">教育经历</a>
+  <a href="#projects">项目经验</a>
+  <a href="#contact">联系方式</a>
+  <button id="theme-toggle" title="切换颜色模式" onclick="toggleTheme()">☀️</button>
+</nav>
+
+<div class="container">
+
+  <!-- Hero -->
+  <section class="hero" id="about">
+    <div class="greeting">👋 你好，我是</div>
+    <h1>谭金强</h1>
+    <div class="role">软件工程师 · 全栈开发</div>
+    <p class="bio">
+      热爱技术，关注代码质量与用户体验。擅长前端工程化与后端架构设计，
+      致力于用简洁优雅的代码解决实际问题。持续探索 Web 技术与 AI 的交汇点。
+    </p>
+    <div class="quick-stats">
+      <div class="stat">
+        <div class="num" id="stat-years">0</div>
+        <div class="label">年经验</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="stat-projects">0</div>
+        <div class="label">项目</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="stat-techs">0</div>
+        <div class="label">技术栈</div>
+      </div>
+    </div>
+    <div class="scroll-indicator"></div>
+  </section>
+
+  <!-- 教育经历 -->
+  <section id="education">
+    <div class="section-label">教育经历</div>
+    <div class="timeline">
+
+      <div class="item">
+        <div class="meta">2021 — 2025</div>
+        <h3>计算机科学与技术 · 本科</h3>
+        <div class="org">XX 大学</div>
+        <div class="desc">
+          主修数据结构、操作系统、计算机网络、数据库原理等核心课程。
+          在校期间参与多个开源项目与校内技术竞赛，积累了扎实的计算机基础。
+        </div>
+        <div class="tags">
+          <span class="tag">GPA 3.6 / 4.0</span>
+          <span class="tag">校级奖学金</span>
+          <span class="tag">优秀毕业生</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 项目经验 -->
+  <section id="projects">
+    <div class="section-label">项目经验</div>
+    <div class="project-grid">
+
+      <div class="project-card">
+        <div class="project-icon">🖐️</div>
+        <h3>手势交互网页</h3>
+        <p class="desc">
+          基于 MediaPipe 和 Canvas API 的实时手势识别交互页面。
+          支持四种手势识别，驱动 400+ 粒子实时渲染与物理模拟。
+        </p>
+        <div class="tags">
+          <span class="tag">JavaScript</span>
+          <span class="tag">MediaPipe</span>
+          <span class="tag">Canvas API</span>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-icon">📦</div>
+        <h3>项目名称</h3>
+        <p class="desc">
+          项目的简要描述，说明解决了什么问题、用了什么技术方案、
+          达到了什么效果或学到了什么。
+        </p>
+        <div class="tags">
+          <span class="tag">React</span>
+          <span class="tag">TypeScript</span>
+          <span class="tag">Node.js</span>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-icon">🔧</div>
+        <h3>项目名称</h3>
+        <p class="desc">
+          项目的简要描述，说明解决了什么问题、用了什么技术方案、
+          达到了什么效果或学到了什么。
+        </p>
+        <div class="tags">
+          <span class="tag">Vue</span>
+          <span class="tag">Python</span>
+          <span class="tag">MySQL</span>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="project-icon">🚀</div>
+        <h3>项目名称</h3>
+        <p class="desc">
+          项目的简要描述，说明解决了什么问题、用了什么技术方案、
+          达到了什么效果或学到了什么。
+        </p>
+        <div class="tags">
+          <span class="tag">Docker</span>
+          <span class="tag">Redis</span>
+          <span class="tag">Golang</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 联系方式 -->
+  <section id="contact">
+    <div class="section-label">联系方式</div>
+    <div class="contact-links">
+      <a href="mailto:2782390780@qq.com" class="contact-link">
+        <span class="icon">📧</span> 2782390780@qq.com
+      </a>
+      <a href="https://github.com/tjq" target="_blank" class="contact-link">
+        <span class="icon">💻</span> github.com/tjq
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    © 2025 <span id="footer-name">谭金强</span>. Built with curiosity and care.
+  </footer>
+
+</div>
+
+<!-- ── Admin trigger ─────────────────── -->
+<button id="admin-trigger" title="管理">⚙</button>
+
+<!-- ── Password modal ────────────────── -->
+<div id="pw-overlay">
+  <div id="pw-box">
+    <h3>🔐 管理员登录</h3>
+    <p>输入密码以编辑个人资料</p>
+    <input type="password" id="pw-input" placeholder="密码" autocomplete="off">
+    <div class="pw-error" id="pw-error">密码错误，请重试</div>
+    <button onclick="verifyPassword()">确 认</button>
+  </div>
+</div>
+
+<!-- ── Admin Panel ───────────────────── -->
+<div id="admin-overlay">
+  <div id="admin-panel">
+    <button class="btn-logout" onclick="closeAdmin()">退出管理</button>
+    <h2>✏️ 编辑个人资料</h2>
+
+    <div class="field">
+      <label>姓名</label>
+      <input id="ed-name" placeholder="你的名字">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>职位</label>
+        <input id="ed-role" placeholder="例如：软件工程师">
+      </div>
+      <div class="field">
+        <label>问候语</label>
+        <input id="ed-greeting" placeholder="例如：👋 你好，我是">
+      </div>
+    </div>
+    <div class="field">
+      <label>个人简介</label>
+      <textarea id="ed-bio" placeholder="写一段关于你自己的介绍"></textarea>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>经验年数</label>
+        <input id="ed-years" type="number" placeholder="0">
+      </div>
+      <div class="field">
+        <label>项目数量</label>
+        <input id="ed-project-count" type="number" placeholder="0">
+      </div>
+    </div>
+    <div class="field">
+      <label>邮箱</label>
+      <input id="ed-email" placeholder="your@email.com">
+    </div>
+    <div class="field">
+      <label>GitHub 用户名</label>
+      <input id="ed-github" placeholder="github 用户名">
+    </div>
+
+    <!-- Education -->
+    <div style="border-top:1px solid var(--border);margin:24px 0 18px;padding-top:18px;">
+      <label style="font-size:13px;color:#fff;">🎓 教育经历</label>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>时间 (如 2021-2025)</label><input id="ed-edu-time"></div>
+      <div class="field"><label>学历/专业</label><input id="ed-edu-degree"></div>
+    </div>
+    <div class="field"><label>学校</label><input id="ed-edu-school"></div>
+    <div class="field"><label>描述</label><textarea id="ed-edu-desc"></textarea></div>
+    <div class="field"><label>标签 (逗号分隔)</label><input id="ed-edu-tags" placeholder="GPA 3.6, 校级奖学金"></div>
+
+    <!-- Projects -->
+    <div style="border-top:1px solid var(--border);margin:24px 0 18px;padding-top:18px;">
+      <label style="font-size:13px;color:#fff;">🚀 项目经验</label>
+    </div>
+    <div id="ed-projects"></div>
+    <button style="background:none;border:1px dashed var(--border);color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;margin-bottom:20px;" onclick="addProjectField()">+ 添加项目</button>
+
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeAdmin()">取消</button>
+      <button class="btn-save" onclick="saveAll()">保存并应用</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Background particles ──────────────────
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const stars = Array.from({ length: 80 }, () => ({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: Math.random() * 1.5 + 0.5,
+    vx: (Math.random() - 0.5) * 0.15,
+    vy: (Math.random() - 0.5) * 0.15,
+    a: Math.random(),
+    da: (Math.random() - 0.5) * 0.005,
+  }));
+
+  function drawBg() {
+    ctx.clearRect(0, 0, W, H);
+
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+
+    // Stars
+    for (const s of stars) {
+      s.x += s.vx;
+      s.y += s.vy;
+      s.a += s.da;
+      if (s.a < 0 || s.a > 1) s.da *= -1;
+      if (s.x < 0) s.x = W;
+      if (s.x > W) s.x = 0;
+      if (s.y < 0) s.y = H;
+      if (s.y > H) s.y = 0;
+
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      if (isLight) {
+        ctx.fillStyle = `rgba(100,100,160,${s.a * 0.2})`;
+      } else {
+        ctx.fillStyle = `rgba(200,200,255,${s.a * 0.5})`;
+      }
+      ctx.fill();
+    }
+
+    // Subtle grid
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    ctx.strokeStyle = isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.012)';
+    ctx.lineWidth = 0.5;
+    const gs = 80;
+    for (let x = gs; x < W; x += gs) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = gs; y < H; y += gs) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    requestAnimationFrame(drawBg);
+  }
+  drawBg();
+
+  // ── Custom cursor ─────────────────────────
+  const cursorDot = document.getElementById('cursor-dot');
+  const cursorRing = document.getElementById('cursor-ring');
+  let mx = 0, my = 0;
+  let cx = 0, cy = 0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX;
+    my = e.clientY;
+  });
+
+  function updateCursor() {
+    cx += (mx - cx) * 0.2;
+    cy += (my - cy) * 0.2;
+    cursorDot.style.left = mx + 'px';
+    cursorDot.style.top = my + 'px';
+    cursorRing.style.left = cx + 'px';
+    cursorRing.style.top = cy + 'px';
+    requestAnimationFrame(updateCursor);
+  }
+
+  // Hover effect on links/cards
+  document.querySelectorAll('a, .project-card, .contact-link').forEach(el => {
+    el.addEventListener('mouseenter', () => cursorRing.classList.add('hover'));
+    el.addEventListener('mouseleave', () => cursorRing.classList.remove('hover'));
+  });
+
+  updateCursor();
+
+  // ── Project card glow follow ──────────────
+  document.querySelectorAll('.project-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
+      card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+    });
+  });
+
+  // ── Scroll reveal ─────────────────────────
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.item, .project-card').forEach(el => observer.observe(el));
+
+  // ── Number counter animation ──────────────
+  function animateCounter(id, target, duration) {
+    const el = document.getElementById(id);
+    let start = 0;
+    const step = (t) => {
+      const progress = Math.min(t / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(eased * target);
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  const statsObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounter('stat-years', 4, 1500);
+        animateCounter('stat-projects', 12, 1800);
+        animateCounter('stat-techs', 8, 1600);
+        statsObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  statsObserver.observe(document.querySelector('.quick-stats'));
+
+  // ── Active nav on scroll ──────────────────
+  const sections = document.querySelectorAll('section');
+  const navLinks = document.querySelectorAll('nav a');
+
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 200) {
+        current = s.getAttribute('id');
+      }
+    });
+    navLinks.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  });
+
+  // ── Smooth scroll for nav ─────────────────
+  navLinks.forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      target.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  // ═══════════════════════════════════════════
+  //  ADMIN MODE
+  // ═══════════════════════════════════════════
+  // ── Theme toggle ──────────────────
+  const THEME_KEY = 'profile_theme';
+  const themeToggle = document.getElementById('theme-toggle');
+
+  function applyTheme(theme) {
+    if (theme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+      themeToggle.textContent = '🌙';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeToggle.textContent = '☀️';
+    }
+  }
+
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    localStorage.setItem(THEME_KEY, next);
+    applyTheme(next);
+  }
+  window.toggleTheme = toggleTheme;
+
+  // Init theme from storage
+  applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+
+  const ADMIN_PASSWORD = '@Qtj18228159787';
+  const STORAGE_KEY = 'profile_data';
+
+  // Default data (mirrors HTML)
+  const defaults = {
+    name: '谭金强',
+    greeting: '👋 你好，我是',
+    role: '软件工程师 · 全栈开发',
+    bio: '热爱技术，关注代码质量与用户体验。擅长前端工程化与后端架构设计，致力于用简洁优雅的代码解决实际问题。持续探索 Web 技术与 AI 的交汇点。',
+    years: 4,
+    projectCount: 4,
+    email: '2782390780@qq.com',
+    github: 'tjq',
+    education: [{
+      time: '2021 — 2025',
+      degree: '计算机科学与技术 · 本科',
+      school: 'XX 大学',
+      desc: '主修数据结构、操作系统、计算机网络、数据库原理等核心课程。在校期间参与多个开源项目与校内技术竞赛，积累了扎实的计算机基础。',
+      tags: ['GPA 3.6 / 4.0', '校级奖学金', '优秀毕业生']
+    }],
+    projects: [
+      { icon:'🖐️', name:'手势交互网页', desc:'基于 MediaPipe 和 Canvas API 的实时手势识别交互页面。支持四种手势识别，驱动 400+ 粒子实时渲染与物理模拟。', tags:['JavaScript','MediaPipe','Canvas API'] },
+      { icon:'📦', name:'项目名称', desc:'项目的简要描述，说明解决了什么问题、用了什么技术方案、达到了什么效果或学到了什么。', tags:['React','TypeScript','Node.js'] },
+      { icon:'🔧', name:'项目名称', desc:'项目的简要描述，说明解决了什么问题、用了什么技术方案、达到了什么效果或学到了什么。', tags:['Vue','Python','MySQL'] },
+      { icon:'🚀', name:'项目名称', desc:'项目的简要描述，说明解决了什么问题、用了什么技术方案、达到了什么效果或学到了什么。', tags:['Docker','Redis','Golang'] }
+    ]
+  };
+
+  function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : { ...defaults, education: [...defaults.education], projects: [...defaults.projects] };
+    } catch { return { ...defaults, education: [...defaults.education], projects: [...defaults.projects] }; }
+  }
+
+  function saveData(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  // Render page from data
+  function renderPage(data) {
+    document.querySelector('.greeting').textContent = data.greeting;
+    document.querySelector('h1').textContent = data.name;
+    document.querySelector('.role').textContent = data.role;
+    document.querySelector('.bio').textContent = data.bio;
+    document.getElementById('footer-name').textContent = data.name;
+    document.title = data.name + ' — 个人简介';
+
+    // Stats
+    window._profileYears = data.years;
+    window._profileProjects = data.projectCount;
+
+    // Contact
+    const contactLinks = document.querySelectorAll('.contact-link');
+    if (contactLinks[0]) {
+      contactLinks[0].href = 'mailto:' + data.email;
+      contactLinks[0].innerHTML = '<span class="icon">📧</span> ' + data.email;
+    }
+    if (contactLinks[1]) {
+      contactLinks[1].href = 'https://github.com/' + data.github;
+      contactLinks[1].innerHTML = '<span class="icon">💻</span> github.com/' + data.github;
+    }
+
+    // Education
+    const eduSection = document.getElementById('education').querySelector('.timeline');
+    eduSection.innerHTML = data.education.map(e => `
+      <div class="item">
+        <div class="meta">${escapeHtml(e.time)}</div>
+        <h3>${escapeHtml(e.degree)}</h3>
+        <div class="org">${escapeHtml(e.school)}</div>
+        <div class="desc">${escapeHtml(e.desc)}</div>
+        <div class="tags">${(e.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+      </div>
+    `).join('');
+    observer.observe(eduSection.querySelector('.item'));
+
+    // Projects
+    const projGrid = document.querySelector('.project-grid');
+    projGrid.innerHTML = data.projects.map(p => `
+      <div class="project-card">
+        <div class="project-icon">${escapeHtml(p.icon)}</div>
+        <h3>${escapeHtml(p.name)}</h3>
+        <p class="desc">${escapeHtml(p.desc)}</p>
+        <div class="tags">${(p.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+      </div>
+    `).join('');
+    document.querySelectorAll('.project-card').forEach(card => {
+      observer.observe(card);
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
+        card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+      });
+      card.addEventListener('mouseenter', () => cursorRing.classList.add('hover'));
+      card.addEventListener('mouseleave', () => cursorRing.classList.remove('hover'));
+    });
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  // Init page from stored data
+  const profileData = loadData();
+  renderPage(profileData);
+
+  // ── Password gate ──────────────────
+  const pwOverlay = document.getElementById('pw-overlay');
+  const pwInput = document.getElementById('pw-input');
+  const pwError = document.getElementById('pw-error');
+
+  function showPasswordPrompt() {
+    pwOverlay.classList.add('open');
+    pwInput.value = '';
+    pwError.classList.remove('show');
+    setTimeout(() => pwInput.focus(), 100);
+  }
+
+  function verifyPassword() {
+    if (pwInput.value === ADMIN_PASSWORD) {
+      pwOverlay.classList.remove('open');
+      openAdmin();
+    } else {
+      pwError.classList.add('show');
+      pwInput.value = '';
+      pwInput.focus();
+    }
+  }
+
+  pwInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') verifyPassword();
+    if (e.key === 'Escape') pwOverlay.classList.remove('open');
+  });
+
+  // ── Admin panel ───────────────────
+  const adminOverlay = document.getElementById('admin-overlay');
+
+  function openAdmin() {
+    const d = loadData();
+    document.getElementById('ed-name').value = d.name;
+    document.getElementById('ed-greeting').value = d.greeting;
+    document.getElementById('ed-role').value = d.role;
+    document.getElementById('ed-bio').value = d.bio;
+    document.getElementById('ed-years').value = d.years;
+    document.getElementById('ed-project-count').value = d.projectCount;
+    document.getElementById('ed-email').value = d.email;
+    document.getElementById('ed-github').value = d.github;
+
+    // Education
+    const e = d.education[0] || {};
+    document.getElementById('ed-edu-time').value = e.time || '';
+    document.getElementById('ed-edu-degree').value = e.degree || '';
+    document.getElementById('ed-edu-school').value = e.school || '';
+    document.getElementById('ed-edu-desc').value = e.desc || '';
+    document.getElementById('ed-edu-tags').value = (e.tags||[]).join(', ');
+
+    // Projects
+    buildProjectFields(d.projects);
+
+    adminOverlay.classList.add('open');
+    document.body.classList.add('admin-mode');
+  }
+
+  function closeAdmin() {
+    adminOverlay.classList.remove('open');
+    document.body.classList.remove('admin-mode');
+  }
+
+  function buildProjectFields(projects) {
+    const container = document.getElementById('ed-projects');
+    container.innerHTML = projects.map((p, i) => `
+      <div class="project-field" style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+        <div class="field-row">
+          <div class="field"><label>图标 (emoji)</label><input value="${escapeHtml(p.icon)}" data-proj="${i}" data-key="icon"></div>
+          <div class="field"><label>项目名称</label><input value="${escapeHtml(p.name)}" data-proj="${i}" data-key="name"></div>
+        </div>
+        <div class="field"><label>描述</label><textarea data-proj="${i}" data-key="desc">${escapeHtml(p.desc)}</textarea></div>
+        <div class="field"><label>标签 (逗号分隔)</label><input value="${(p.tags||[]).join(', ')}" data-proj="${i}" data-key="tags"></div>
+        <div style="text-align:right;margin-top:8px;">
+          <button class="danger" onclick="removeProject(${i})" style="font-size:11px;background:none;border:1px solid rgba(248,113,113,0.3);color:#f87171;padding:4px 12px;border-radius:6px;cursor:pointer;">删除此项目</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.addProjectField = function() {
+    const d = loadData();
+    d.projects.push({ icon:'💡', name:'新项目', desc:'项目描述', tags:['新技术'] });
+    saveData(d);
+    buildProjectFields(d.projects);
+  };
+
+  window.removeProject = function(index) {
+    const d = loadData();
+    d.projects.splice(index, 1);
+    saveData(d);
+    buildProjectFields(d.projects);
+  };
+
+  function saveAll() {
+    const d = loadData();
+    d.name = document.getElementById('ed-name').value.trim() || defaults.name;
+    d.greeting = document.getElementById('ed-greeting').value.trim() || defaults.greeting;
+    d.role = document.getElementById('ed-role').value.trim() || defaults.role;
+    d.bio = document.getElementById('ed-bio').value.trim() || defaults.bio;
+    d.years = parseInt(document.getElementById('ed-years').value) || 0;
+    d.projectCount = parseInt(document.getElementById('ed-project-count').value) || 0;
+    d.email = document.getElementById('ed-email').value.trim() || defaults.email;
+    d.github = document.getElementById('ed-github').value.trim() || defaults.github;
+
+    d.education = [{
+      time: document.getElementById('ed-edu-time').value.trim(),
+      degree: document.getElementById('ed-edu-degree').value.trim(),
+      school: document.getElementById('ed-edu-school').value.trim(),
+      desc: document.getElementById('ed-edu-desc').value.trim(),
+      tags: document.getElementById('ed-edu-tags').value.split(',').map(t=>t.trim()).filter(Boolean)
+    }];
+
+    // Collect projects
+    const projFields = document.querySelectorAll('#ed-projects .project-field');
+    d.projects = Array.from(projFields).map(field => ({
+      icon: field.querySelector('[data-key="icon"]').value.trim(),
+      name: field.querySelector('[data-key="name"]').value.trim(),
+      desc: field.querySelector('[data-key="desc"]').value.trim(),
+      tags: field.querySelector('[data-key="tags"]').value.split(',').map(t=>t.trim()).filter(Boolean)
+    }));
+
+    saveData(d);
+    renderPage(d);
+    closeAdmin();
+
+    // Re-trigger counter animation
+    const statsEl = document.querySelector('.quick-stats');
+    statsEl.style.opacity = '0';
+    requestAnimationFrame(() => {
+      statsEl.style.opacity = '1';
+      animateCounter('stat-years', d.years, 1200);
+      animateCounter('stat-projects', d.projectCount, 1400);
+      animateCounter('stat-techs', new Set(d.projects.flatMap(p=>p.tags)).size, 1300);
+    });
+  }
+
+  // ── Triggers ──────────────────────
+  document.getElementById('admin-trigger').addEventListener('click', showPasswordPrompt);
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'E') {
+      e.preventDefault();
+      showPasswordPrompt();
+    }
+  });
+
+  // Close overlays on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      pwOverlay.classList.remove('open');
+      if (adminOverlay.classList.contains('open')) closeAdmin();
+    }
+  });
+
+  // Close overlays on outside click
+  pwOverlay.addEventListener('click', e => {
+    if (e.target === pwOverlay) pwOverlay.classList.remove('open');
+  });
+  adminOverlay.addEventListener('click', e => {
+    if (e.target === adminOverlay) closeAdmin();
+  });
+
+  // Re-count techs on load
+  setTimeout(() => {
+    const techs = new Set(profileData.projects.flatMap(p => p.tags));
+    document.getElementById('stat-techs').textContent = techs.size;
+  }, 100);
+</script>
+</body>
+</html>
