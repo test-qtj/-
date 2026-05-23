@@ -16,6 +16,27 @@ const MIME = {
   '.jpg': 'image/jpeg',
 };
 
+function formatJSObject(obj, indent = 0) {
+  const pad = ' '.repeat(indent);
+  const inner = ' '.repeat(indent + 2);
+
+  if (obj === null) return 'null';
+  if (typeof obj === 'boolean') return obj.toString();
+  if (typeof obj === 'number') return obj.toString();
+  if (typeof obj === 'string') return `'${obj.replace(/'/g, "\\'").replace(/\n/g, '\\n')}'`;
+
+  if (Array.isArray(obj)) {
+    if (obj.length === 0) return '[]';
+    const items = obj.map(v => inner + formatJSObject(v, indent + 2));
+    return '[\n' + items.join(',\n') + '\n' + pad + ']';
+  }
+
+  const keys = Object.keys(obj);
+  if (keys.length === 0) return '{}';
+  const pairs = keys.map(k => inner + k + ': ' + formatJSObject(obj[k], indent + 2));
+  return '{\n' + pairs.join(',\n') + '\n' + pad + '}';
+}
+
 const server = http.createServer((req, res) => {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
